@@ -11,7 +11,7 @@ const REQUIRED_SAMPLES = 3;
 
 export default function Enroll() {
   const navigate = useNavigate();
-  const { setEnrollmentVector, setEnrollmentKeystroke, setEnrollmentMouse, setWalletAddress, setIsEnrolled, addEtherscanLink, demoMode } = useVaultless();
+  const { setEnrollmentVector, setEnrollmentKeystroke, setEnrollmentMouse, setWalletAddress, setRecoveryEmail, setIsEnrolled, addEtherscanLink, demoMode } = useVaultless();
   const showSensorDebug = import.meta.env.VITE_SHOW_SENSOR_DEBUG === 'true';
 
   const [phase, setPhase] = useState('intro'); // intro | capturing | processing | done | error
@@ -42,6 +42,7 @@ export default function Enroll() {
   const [txHash, setTxHash] = useState(null);
   const [statusMsg, setStatusMsg] = useState('');
   const [walletAddr, setWalletAddr] = useState(null);
+  const [backupEmail, setBackupEmail] = useState('');
   const inputRef = useRef(null);
 
   const keystroke = useKeystrokeDNA();
@@ -129,7 +130,15 @@ export default function Enroll() {
   }, [mouse.getPoints]);
 
   const connectWallet = async () => {
+    const email = backupEmail.trim();
+    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!isEmailValid) {
+      setStatusMsg('Please enter a valid recovery email before enrollment.');
+      return;
+    }
+
     try {
+      setRecoveryEmail(email);
       if (demoMode) {
         setWalletAddr('0xDEMO...1234');
         setWalletAddress('0xDEMO...1234');
@@ -182,6 +191,9 @@ export default function Enroll() {
   const showEnableSensors = motionNeedsGesture || orientationNeedsGesture || androidChromeNeedsManualEnable;
   const sensorsEnabled = motionAvailable || sensorDiag.motionPermission === 'granted' || sensorDiag.orientationPermission === 'granted';
   const sensorActivityLive = (sensorDiag.motionEvents || 0) > 0 || (sensorDiag.orientationEvents || 0) > 0;
+  const isMobilePlatform = sensorDiag.platform === 'ios' || sensorDiag.platform === 'android';
+  const hasSensorApi = sensorDiag.hasDeviceMotion || sensorDiag.hasDeviceOrientation;
+  const showMobileSensorUi = isMobilePlatform && hasSensorApi;
   const sensorHealthText = !sensorDiag.isSecureContext
     ? 'Secure connection required'
     : sensorsEnabled
@@ -390,9 +402,18 @@ export default function Enroll() {
               <li>Your behavioural DNA is captured, never stored</li>
               <li>The hash is committed permanently to Ethereum</li>
             </ul>
+            <input
+              style={styles.recoveryInput}
+              type="email"
+              value={backupEmail}
+              onChange={(e) => setBackupEmail(e.target.value)}
+              placeholder="Recovery email for duress alerts"
+              autoComplete="email"
+            />
             <button style={styles.cta} onClick={connectWallet}>
               {demoMode ? 'Start Enrollment (Demo)' : 'Connect MetaMask & Begin'}
             </button>
+            {statusMsg && <div style={styles.status}>{statusMsg}</div>}
           </div>
         )}
 
@@ -405,7 +426,7 @@ export default function Enroll() {
             <div style={styles.phrase}>"{PHRASE}"</div>
             <p style={styles.hint}>Press Enter when done</p>
 
-            <div style={styles.sensorInfoCard}>
+            {showMobileSensorUi && <div style={styles.sensorInfoCard}>
               <div style={styles.sensorInfoText}>
                 Motion Sensors: <span style={{ color: sensorsEnabled ? '#00ff88' : '#ffb366' }}>{sensorsEnabled ? 'Enabled' : 'Optional'}</span>
               </div>
@@ -414,9 +435,9 @@ export default function Enroll() {
                   Enable for stronger mobile protection.
                 </div>
               )}
-            </div>
+            </div>}
 
-            {showEnableSensors && (
+            {showMobileSensorUi && showEnableSensors && (
               <div style={styles.sensorActionBox}>
                 <div style={styles.sensorActionText}>
                   Tap to enable motion sensors on this device.
@@ -431,7 +452,7 @@ export default function Enroll() {
               </div>
             )}
 
-            {sensorDenied && (
+            {showMobileSensorUi && sensorDenied && (
               <div style={styles.sensorWarning}>
                 {sensorBlockedHint}
               </div>
@@ -473,7 +494,7 @@ export default function Enroll() {
               </div>
             )}
 
-            {gyroGraphData.length > 0 && (
+            {showMobileSensorUi && gyroGraphData.length > 0 && (
               <div style={styles.graphContainer}>
                 <div style={styles.graphLabel}>GYROSCOPE ACTIVITY — LIVE</div>
                 <ResponsiveContainer width="100%" height={120}>
@@ -489,7 +510,7 @@ export default function Enroll() {
               </div>
             )}
 
-            {!motionAvailable && gyroGraphData.length === 0 && (
+            {showMobileSensorUi && !motionAvailable && gyroGraphData.length === 0 && (
               <div style={styles.graphContainer}>
                 <div style={styles.graphLabel}>GYROSCOPE ACTIVITY — NOT AVAILABLE</div>
                 <div style={{ color: '#666', fontSize: 12, padding: '20px' }}>
@@ -498,7 +519,7 @@ export default function Enroll() {
               </div>
             )}
 
-            {showSensorDebug && touchGraphData.length > 0 && (
+            {showMobileSensorUi && showSensorDebug && touchGraphData.length > 0 && (
               <div style={styles.graphContainer}>
                 <div style={styles.graphLabel}>TOUCH PRESSURE — LIVE</div>
                 <ResponsiveContainer width="100%" height={120}>
@@ -514,7 +535,7 @@ export default function Enroll() {
               </div>
             )}
 
-            <div style={styles.sensorMiniCard}>
+            {showMobileSensorUi && <div style={styles.sensorMiniCard}>
               <div style={styles.sensorMiniTitle}>SENSOR STATUS</div>
               <div style={styles.sensorMiniRow}>
                 <span style={styles.sensorMiniKey}>Health</span>
@@ -528,7 +549,7 @@ export default function Enroll() {
                 <span style={styles.sensorMiniKey}>Gyro Activity</span>
                 <span style={styles.sensorMiniVal}>{sensorActivityLive ? 'Live' : 'Waiting for movement'}</span>
               </div>
-            </div>
+            </div>}
 
             {statusMsg && <div style={styles.status}>{statusMsg}</div>}
 
@@ -607,6 +628,7 @@ const styles = {
   sensorActionText: { color: '#8ed8ae', fontSize: 12, marginBottom: 8 },
   sensorEnableBtn: { background: '#00ff88', color: '#000', border: 'none', padding: '8px 14px', borderRadius: 4, cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: "'Courier New', monospace" },
   sensorWarning: { marginBottom: 16, background: '#2a120f', border: '1px solid #5c2a23', borderRadius: 6, padding: '10px 12px', color: '#ffb09f', fontSize: 12, textAlign: 'left', lineHeight: 1.4 },
+  recoveryInput: { width: '100%', padding: '12px 14px', marginBottom: 16, background: '#101010', border: '1px solid #2a2a2a', borderRadius: 6, color: '#d8ffe9', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: "'Courier New', monospace" },
   typeInput: { width: '100%', padding: '16px', background: '#111', border: '1px solid #00ff8844', borderRadius: 6, color: '#00ff88', fontSize: 18, textAlign: 'center', outline: 'none', boxSizing: 'border-box', letterSpacing: 2, fontFamily: "'Courier New', monospace" },
   graphContainer: { marginTop: 32, background: '#060606', border: '1px solid #111', borderRadius: 8, padding: '16px' },
   graphLabel: { color: '#333', fontSize: 10, letterSpacing: 3, marginBottom: 8 },
