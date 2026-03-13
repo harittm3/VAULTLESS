@@ -1,6 +1,23 @@
 import { motion } from "framer-motion";
 import { useEffect } from "react";
 
+const styles = {
+  container: {
+    position: "fixed",
+    inset: 0,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    background: "transparent", // important so page is visible
+    zIndex: 9999
+  },
+
+  hex: {
+    zIndex: 10000,
+    filter: "drop-shadow(0 0 20px #00cc66)"
+  }
+};
+
 export default function HexLoader({ onFinish }) {
 
   useEffect(() => {
@@ -27,7 +44,7 @@ export default function HexLoader({ onFinish }) {
 
         animate={{
           scale: 30,
-          opacity: 0   // fades away while zooming
+          opacity: 0
         }}
 
         transition={{
@@ -48,22 +65,3 @@ export default function HexLoader({ onFinish }) {
     </div>
   );
 }
-
-const styles = {
-
-  container: {
-    position: "fixed",
-    inset: 0,
-    background: "transparent",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
-    zIndex: 9999
-  },
-
-  hex: {
-    filter: "drop-shadow(0 0 20px #00cc66)"
-  }
-
-};

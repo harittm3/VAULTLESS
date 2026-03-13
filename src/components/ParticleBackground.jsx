@@ -2,7 +2,6 @@ import { useCallback } from "react";
 import Particles from "@tsparticles/react";
 import { loadFull } from "tsparticles";
 
-
 export default function ParticleBackground() {
 
   const particlesInit = useCallback(async (engine) => {
@@ -14,48 +13,71 @@ export default function ParticleBackground() {
       id="tsparticles"
       init={particlesInit}
       options={{
+
         fullScreen: {
           enable: true,
-          zIndex: 0
+          zIndex: -1
         },
 
         background: {
-          color: "#000000"
+          color: "transparent"
         },
 
         particles: {
+
           number: {
-            value: 200
+            value: 200,
+            density: {
+              enable: true,
+              area: 800
+            }
           },
 
           color: {
-            value: "#00ffcc"
+            value: "#00cc66"
+          },
+
+          shape: {
+            type: "circle"
+          },
+
+          opacity: {
+            value: 0.6
           },
 
           size: {
-            value: 2
-          },
-
-          move: {
-            enable: true,
-            speed: 1.0
+            value: { min: 1, max: 3 }
           },
 
           links: {
             enable: true,
             distance: 160,
-            color: "#00ffcc",
-            opacity: 0.4,
+            color: "#00cc66",
+            opacity: 0.35,
             width: 1
+          },
+
+          move: {
+            enable: true,
+            speed: 0.6,
+            direction: "none",
+            random: false,
+            straight: false,
+            outModes: {
+              default: "bounce"
+            }
           }
+
         },
 
         interactivity: {
+
           events: {
             onHover: {
               enable: true,
               mode: "grab"
-            }
+            },
+            resize: true
           },
 
           modes: {
@@ -66,7 +88,10 @@ export default function ParticleBackground() {
               }
             }
           }
-        }
+
+        },
+
+        detectRetina: true
       }}
     />
   );
