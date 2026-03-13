@@ -173,9 +173,15 @@ function animateParticles(canvas) {
 
 const s = {
   root: {
-    minHeight: '100vh', background: '#000', color: '#e8e8f0',
-    fontFamily: "'Inter', 'Segoe UI', sans-serif",
-    position: 'relative', overflowX: 'hidden',
+   root: {
+  minHeight: '100vh',
+  background: 'transparent',
+  color: '#e8e8f0',
+  fontFamily: "'Inter', 'Segoe UI', sans-serif",
+  position: 'relative',
+  zIndex: 1,
+  overflowX: 'hidden',
+}
   },
   canvas: {
     position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
