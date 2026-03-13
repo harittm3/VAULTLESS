@@ -7,12 +7,9 @@ import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import Ghost from './pages/Ghost';
 import ParticleBackground from './components/ParticleBackground.jsx'
-import { useState } from "react";
-import HexLoader from "./components/HexLoader";
+
 
 export default function App() {
-
-  const [loading, setLoading] = useState(true);
 
   return (
     <VaultlessProvider>
@@ -26,11 +23,6 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/ghost" element={<Ghost />} />
         </Routes>
-
-        {/* LOADER OVERLAY */}
-        {loading && (
-          <HexLoader onFinish={() => setLoading(false)} />
-        )}
 
       </BrowserRouter>
     </VaultlessProvider>
