@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVaultless } from '../lib/VaultlessContext';
+import HexLoader from '../components/HexLoader';
 
 export default function Landing() {
   const navigate = useNavigate();
   const { demoMode, setDemoMode } = useVaultless();
+  const [loading, setLoading] = useState(true);
   const [visible, setVisible] = useState(false);
   const canvasRef = useRef(null);
 
@@ -17,6 +19,8 @@ export default function Landing() {
 
   return (
     <div style={s.root}>
+      {loading && <HexLoader onFinish={() => setLoading(false)} />}
+
       <canvas ref={canvasRef} style={s.canvas} />
       <div style={s.scanline} />
 
@@ -92,7 +96,12 @@ export default function Landing() {
             { title: 'Ethereum Trust Layer', desc: 'Every auth event, failed attempt, and duress trigger logged permanently on Sepolia. Immutable. Public. Forever.', tag: 'keccak256 · Sepolia', tagColor: '#00d4ff' },
             { title: 'Anti-Coercion Protocol', desc: 'Stress signature detected in rhythm. Ghost session loads. Blockchain records the attack.', tag: 'DuressActivated · On-chain', tagColor: '#ff6b35' },
           ].map(card => (
-            <div key={card.title} style={s.card}>
+            <div 
+              key={card.title} 
+              style={s.card}
+              onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 0 30px rgba(0,255,136,0.5)'}
+              onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 0 20px rgba(0,255,136,0.2)'}
+            >
               <div style={s.cardTopEdge} />
               <div style={{ color: '#00ff88', fontSize: 20, marginBottom: 12 }}>⬡</div>
               <div style={s.cardTitle}>{card.title}</div>
