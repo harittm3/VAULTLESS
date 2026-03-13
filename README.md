@@ -1,4 +1,4 @@
-# VAULTLESS
+# ⬡ VAULTLESS
 
 Behavioural authentication prototype for desktop and touch devices that uses multiple behavioural signals, including typing rhythm, mouse dynamics, touch interaction, device motion, and stress indicators, as a password substitute, with authentication events anchored to an Ethereum Sepolia smart contract.
 
