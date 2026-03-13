@@ -10,7 +10,7 @@ const PHRASE = 'Secure my account';
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { enrollmentVector, enrollmentKeystroke, enrollmentMouse, walletAddress, isEnrolled, setIsDuressMode, setLastAuthScore, addEtherscanLink, demoMode } = useVaultless();
+  const { enrollmentVector, enrollmentKeystroke, enrollmentMouse, walletAddress, recoveryEmail, isEnrolled, setIsDuressMode, setLastAuthScore, addEtherscanLink, demoMode } = useVaultless();
 
   const [phase, setPhase] = useState('ready'); // ready | typing | scoring | result
   const [currentInput, setCurrentInput] = useState('');
@@ -127,7 +127,12 @@ export default function Auth() {
           await new Promise(r => setTimeout(r, 800));
           const fakeTx = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
           addEtherscanLink('DuressActivated', fakeTx);
-          await sendDuressAlert({ address: walletAddress || 'DEMO', txHash: fakeTx, timestamp: Date.now() });
+          const alertResult = await sendDuressAlert({ address: walletAddress || 'DEMO', txHash: fakeTx, timestamp: Date.now(), recoveryEmail });
+          if (!alertResult.ok) {
+            setStatusMsg(`Duress logged, but email alert failed: ${alertResult.error}`);
+          } else {
+            setStatusMsg('Duress protocol activated. Recovery email alerted.');
+          }
           setTimeout(() => navigate('/ghost'), 1500);
           return;
         }
@@ -136,10 +141,16 @@ export default function Auth() {
         const tx = await contract.triggerDuress();
         const receipt = await tx.wait();
         addEtherscanLink('DuressActivated', receipt.hash);
-        await sendDuressAlert({ address: walletAddress, txHash: receipt.hash, timestamp: Date.now() });
+        const alertResult = await sendDuressAlert({ address: walletAddress, txHash: receipt.hash, timestamp: Date.now(), recoveryEmail });
+        if (!alertResult.ok) {
+          setStatusMsg(`Duress logged, but email alert failed: ${alertResult.error}`);
+        } else {
+          setStatusMsg('Duress protocol activated. Recovery email alerted.');
+        }
         setTimeout(() => navigate('/ghost'), 1500);
       } catch (e) {
         console.error('Duress chain error:', e);
+        setStatusMsg('Duress protocol activated. Could not complete all alert steps.');
         setTimeout(() => navigate('/ghost'), 1500);
       }
     } else {
