@@ -9,7 +9,6 @@ export default function Landing() {
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
     setTimeout(() => setVisible(true), 100);
     const cleanup = animateParticles(canvasRef.current);
     return cleanup;
@@ -66,27 +65,31 @@ export default function Landing() {
           >
             Get Started →
           </button>
-          <a
-            href="https://sepolia.etherscan.io"
-            target="_blank"
-            rel="noreferrer"
-            style={s.ctaSecondary}
-            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(0,255,136,0.6)'}
-            onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(0,255,136,0.25)'}
-          >
-            View on Etherscan ↗
-          </a>
         </div>
 
-        {/* Counter */}
-        <div style={s.counter}>⬡ 0 identities enrolled on-chain</div>
+        {/* Glitch tagline */}
+        <div style={s.glitchBlock}>
+          <p style={{...s.glitchLine, animation: 'flicker 3.5s infinite 0.5s'}}>Your password is already dead.</p>
+          <p style={s.glitchLine}>
+            Welcome to{' '}
+            <span id="glitch-vaultless" data-text="VAULTLESS" style={{
+              color: '#00ff88',
+              fontWeight: 700,
+              letterSpacing: '0.3em',
+              textShadow: '0 0 12px rgba(0,255,136,0.7)',
+              position: 'relative',
+              display: 'inline-block',
+              animation: 'glitch1 2.5s infinite, flicker 3.5s infinite',
+            }}>VAULTLESS</span>.
+          </p>
+        </div>
 
         {/* Feature cards */}
         <div style={s.cards}>
           {[
             { title: 'Behavioural DNA', desc: 'Keystroke timing + mouse dynamics. 64-dimensional vector unique to you. No biometric stored anywhere.', tag: 'Float32Array[64]', tagColor: '#00d4ff' },
             { title: 'Ethereum Trust Layer', desc: 'Every auth event, failed attempt, and duress trigger logged permanently on Sepolia. Immutable. Public. Forever.', tag: 'keccak256 · Sepolia', tagColor: '#00d4ff' },
-            { title: 'Anti-Coercion Protocol', desc: 'Stress signature detected in rhythm. Ghost session loads.Blockchain records the attack.', tag: 'DuressActivated · on-chain', tagColor: '#ff6b35' },
+            { title: 'Anti-Coercion Protocol', desc: 'Stress signature detected in rhythm. Ghost session loads. Blockchain records the attack.', tag: 'DuressActivated · On-chain', tagColor: '#ff6b35' },
           ].map(card => (
             <div key={card.title} style={s.card}>
               <div style={s.cardTopEdge} />
@@ -101,9 +104,9 @@ export default function Landing() {
         {/* Stats bar */}
         <div style={s.statsBar}>
           {[
-            { num: '1.8B', label: 'passwords stolen last year' },
-            { num: '0', label: 'databases in VAULTLESS' },
-            { num: '∞', label: 'auth records on Ethereum' },
+            { num: '4.5B', label: 'records breached in 2023' },
+            { num: '0', label: 'records stored in VAULTLESS' },
+            { num: '∞', label: 'every auth on-chain forever' },
           ].map((stat, i) => (
             <div key={stat.label} style={{ display: 'flex', alignItems: 'center' }}>
               {i > 0 && <div style={s.statDivider} />}
@@ -116,6 +119,47 @@ export default function Landing() {
         </div>
 
       </div>
+
+      <style>{`
+        @keyframes glitch1 {
+          0%,78%,100% { clip-path: none; transform: none; }
+          79% { clip-path: polygon(0 20%, 100% 20%, 100% 40%, 0 40%); transform: translateX(-6px); }
+          80% { clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%); transform: translateX(6px); }
+          81% { clip-path: polygon(0 10%, 100% 10%, 100% 30%, 0 30%); transform: translateX(-3px); }
+          82% { clip-path: polygon(0 50%, 100% 50%, 100% 70%, 0 70%); transform: translateX(5px); }
+          83% { clip-path: none; transform: translateX(-2px); }
+          84% { clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%); transform: translateX(4px); }
+          85% { clip-path: none; transform: none; }
+        }
+        @keyframes glitch2 {
+          0%,78%,100% { opacity: 0; }
+          79% { opacity: 1; transform: translateX(5px); color: #ff0040; }
+          80% { transform: translateX(-5px); color: #00ffff; }
+          81% { opacity: 1; transform: translateX(3px); color: #ff0040; }
+          82% { transform: translateX(-4px); color: #00ffff; }
+          83% { opacity: 0; }
+          84% { opacity: 1; transform: translateX(2px); color: #ff0040; }
+          85% { opacity: 0; }
+        }
+        @keyframes flicker {
+          0%,70%,100% { opacity: 1; }
+          71% { opacity: 0.3; }
+          72% { opacity: 1; }
+          73% { opacity: 0.5; }
+          74% { opacity: 1; }
+          75% { opacity: 0.2; }
+          76% { opacity: 1; }
+        }
+        #glitch-vaultless::before {
+          content: attr(data-text);
+          position: absolute;
+          left: 0; top: 0;
+          color: #00ff88;
+          letter-spacing: 0.3em;
+          animation: glitch2 2.5s infinite;
+          pointer-events: none;
+        }
+      `}</style>
     </div>
   );
 }
@@ -139,7 +183,6 @@ function animateParticles(canvas) {
   resize();
   window.addEventListener('resize', resize);
 
-  // 🔥 more particles
   const particles = Array.from({ length: 180 }, () => ({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
@@ -154,41 +197,31 @@ function animateParticles(canvas) {
 
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
-
-      // normal motion
       p.x += p.vx;
       p.y += p.vy;
-
       if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
       if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
 
-      // 🧲 cursor attraction
       if (mouse.x && mouse.y) {
         const dx = mouse.x - p.x;
         const dy = mouse.y - p.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-
         if (dist < 200) {
           p.x += dx * 0.02;
           p.y += dy * 0.02;
         }
       }
 
-      // draw particle
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = p.cyan
-        ? 'rgba(0,212,255,0.6)'
-        : 'rgba(0,255,136,0.65)';
+      ctx.fillStyle = p.cyan ? 'rgba(0,212,255,0.6)' : 'rgba(0,255,136,0.65)';
       ctx.fill();
 
-      // draw connections
       for (let j = i + 1; j < particles.length; j++) {
         const q = particles[j];
         const dx = p.x - q.x;
         const dy = p.y - q.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-
         if (dist < 150) {
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
@@ -232,13 +265,14 @@ const s = {
   demoToggle: {
     position: 'fixed', top: 20, right: 20, zIndex: 100,
     display: 'flex', alignItems: 'center', gap: 10,
-    background: 'rgba(0,0,0,0.8)', border: '1px solid #222',
+    background: 'rgba(0,0,0,0.75)', border: '1px solid rgba(0,255,136,0.25)',
     borderRadius: 8, padding: '8px 14px',
+    boxShadow: '0 0 18px rgba(0,255,136,0.2)',
   },
-  demoLabel: { color: '#555', fontSize: 11, letterSpacing: 2, fontFamily: "'Courier New', monospace" },
+  demoLabel: { color: 'rgba(255,255,255,0.75)', fontSize: 11, letterSpacing: 2, fontFamily: "'Courier New', monospace" },
   toggle: {
     border: 'none', borderRadius: 4, padding: '4px 10px', cursor: 'pointer',
-    fontSize: 11, fontWeight: 700, color: '#000', letterSpacing: 1, transition: 'background 0.3s',
+    fontSize: 11, fontWeight: 700, color: '#111', letterSpacing: 1, transition: 'background 0.3s',
   },
   hero: {
     position: 'relative', zIndex: 2,
@@ -276,8 +310,10 @@ const s = {
     backgroundClip: 'text',
   },
   sub: {
-    color: '#ffffff', fontSize: 20, lineHeight: 1.7,
-    maxWidth: 640, marginBottom: 48, fontWeight: 300,
+    fontFamily: "'Courier New', monospace",
+    color: '#ffffff', fontSize: 16, lineHeight: 1.7,
+    maxWidth: 640, marginBottom: 48, fontWeight: 400,
+    letterSpacing: '0.08em', textTransform: 'uppercase',
   },
   actions: {
     display: 'flex', gap: 14, marginBottom: 28,
@@ -291,24 +327,21 @@ const s = {
     boxShadow: '0 0 24px rgba(0,255,136,0.3)',
     transition: 'opacity 0.2s',
   },
-  ctaSecondary: {
-    background: 'transparent',
-    border: '1px solid rgba(0,255,136,0.25)',
-    color: '#00ff88', padding: '15px 32px',
-    fontSize: 15, fontWeight: 600, borderRadius: 10,
-    cursor: 'pointer', textDecoration: 'none',
-    display: 'inline-flex', alignItems: 'center',
-    transition: 'border-color 0.2s',
+
+  glitchBlock: {
+    marginBottom: 56, marginTop: 4,
+    textAlign: 'center',
   },
-  counter: {
+  glitchLine: {
     fontFamily: "'Courier New', monospace",
-    fontSize: 12, color: '#00ff88', opacity: 0.5,
-    marginBottom: 80, letterSpacing: 1,
+    color: 'rgba(255,255,255,0.75)', fontSize: 13,
+    letterSpacing: '0.15em', textTransform: 'uppercase',
+    margin: '0 0 6px',
   },
+
   cards: {
     display: 'flex', gap: 20, flexWrap: 'wrap',
     justifyContent: 'center', marginBottom: 64, width: '100%',
-    color: '#dc10f3',
   },
   card: {
     flex: '1 1 240px', maxWidth: 290,
@@ -323,7 +356,7 @@ const s = {
     background: 'linear-gradient(90deg, transparent, rgba(0,255,136,0.4), transparent)',
   },
   cardTitle: {
-    color: '#5161cd', fontSize: 14, fontWeight: 700,
+    color: '#00ff88', fontSize: 14, fontWeight: 700,
     letterSpacing: '0.04em', marginBottom: 10,
   },
   cardDesc: { color: '#ffffff', fontSize: 13, lineHeight: 1.7, marginBottom: 16 },
@@ -343,6 +376,6 @@ const s = {
     WebkitTextFillColor: 'transparent',
     backgroundClip: 'text',
   },
-  statLabel: { color: '#4a4a5a', fontSize: 13 },
-  statDivider: { width: 1, height: 40, background: 'rgba(0,255,136,0.1)', margin: '0' },
+  statLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 13 },
+  statDivider: { width: 1, height: 40, background: 'rgba(0,255,136,0.2)', margin: '0' },
 };
