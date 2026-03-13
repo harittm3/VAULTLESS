@@ -6,10 +6,11 @@ export default function Gmail() {
   const { isEnrolled } = useVaultless();
 
   return (
-    <div style={styles.root}>
-      {/* Gmail-like header */}
-      <div style={styles.header}>
-        <span style={styles.logo}>
+    <div style={s.root}>
+
+      <div style={s.header}>
+        <img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" width="32" height="32" style={{ marginRight: 8, borderRadius: '50%' }} alt="Gmail" />
+        <span style={s.wordmark}>
           <span style={{ color: '#4285F4' }}>G</span>
           <span style={{ color: '#EA4335' }}>m</span>
           <span style={{ color: '#FBBC05' }}>a</span>
@@ -18,115 +19,105 @@ export default function Gmail() {
         </span>
       </div>
 
-      <div style={styles.card}>
-        <div style={styles.googleLogo}>
-          <svg width="48" height="48" viewBox="0 0 48 48">
-            <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/>
-            <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.32-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>
-            <path fill="#FBBC05" d="M11.68 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.68-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24c0 3.55.85 6.91 2.34 9.88l7.34-5.7z"/>
-            <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.34 5.7c1.74-5.2 6.59-9.07 12.32-9.07z"/>
-          </svg>
+      <div style={s.card}>
+        <div style={s.logoWrap}>
+          <div style={s.logoCircle}>
+            <img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" width="40" height="40" alt="Gmail" />
+          </div>
         </div>
 
-        <h2 style={styles.title}>Sign in</h2>
-        <p style={styles.subtitle}>to continue to Gmail</p>
+        <h2 style={s.title}>Sign in</h2>
+        <p style={s.subtitle}>to continue to Gmail</p>
 
-        <input
-          style={styles.emailInput}
-          placeholder="Email or phone"
-          defaultValue="user@gmail.com"
-          readOnly
-        />
+        <input style={s.input} placeholder="Email or phone" readOnly />
 
-        <div style={styles.divider}>
-          <div style={styles.dividerLine} />
-          <span style={styles.dividerText}>or sign in with</span>
-          <div style={styles.dividerLine} />
+        <div style={s.divider}>
+          <div style={s.line} />
+          <span style={s.dividerText}>or sign in with</span>
+          <div style={s.line} />
         </div>
 
-        <button style={styles.vaultlessBtn} onClick={() => navigate(isEnrolled ? '/auth' : '/enroll')}>
-          <span style={styles.vaultlessIcon}>⬡</span>
+        <button
+          style={s.btn}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+          onClick={() => navigate(isEnrolled ? '/auth' : '/enroll')}
+        >
+          <span style={s.hex}>⬡</span>
           Sign in with VAULTLESS
         </button>
 
-        <p style={styles.vaultlessTagline}>
-          Passwordless · Unstealable · Anti-Coercion
-        </p>
+        <p style={s.tagline}>Passwordless · Unstealable · Anti-Coercion</p>
 
-        <div style={styles.footer}>
-          <a href="#" style={styles.link}>Help</a>
-          <a href="#" style={styles.link}>Privacy</a>
-          <a href="#" style={styles.link}>Terms</a>
+        <div style={s.footer}>
+          <a href="#" style={s.link}>Help</a>
+          <a href="#" style={s.link}>Privacy</a>
+          <a href="#" style={s.link}>Terms</a>
         </div>
       </div>
+
+      <style>{`
+        input::placeholder { color: #bec0c4; }
+        input:focus { border-color: #1a73e8 !important; outline: none; box-shadow: 0 0 0 2px rgba(26,115,232,0.15); }
+      `}</style>
     </div>
   );
 }
 
-const styles = {
+const s = {
   root: {
-    minHeight: '100vh',
-    background: '#fff',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
+    minHeight: '100vh', background: '#fff',
+    display: 'flex', flexDirection: 'column', alignItems: 'center',
     fontFamily: "'Google Sans', Roboto, Arial, sans-serif",
   },
   header: {
-    width: '100%',
-    padding: '16px 24px',
-    borderBottom: '1px solid #e0e0e0',
+    width: '100%', padding: '16px 24px',
+    display: 'flex', alignItems: 'center',
   },
-  logo: { fontSize: 22, fontWeight: 500, letterSpacing: -0.5 },
+  wordmark: {
+    fontSize: 22, fontWeight: 400, color: '#5f6368',
+    fontFamily: "Arial, sans-serif", letterSpacing: 0.3,
+  },
   card: {
-    marginTop: 80,
-    width: '100%',
-    maxWidth: 448,
-    border: '1px solid #dadce0',
-    borderRadius: 8,
-    padding: '48px 40px',
-    textAlign: 'center',
+    marginTop: 60, width: '100%', maxWidth: 440,
+    border: '1px solid #dadce0', borderRadius: 12,
+    padding: '48px 44px 36px', textAlign: 'center',
+    boxShadow: '0 4px 6px rgba(32,33,36,0.1), 0 1px 3px rgba(32,33,36,0.08), 0 8px 24px rgba(32,33,36,0.06)',
   },
-  googleLogo: { marginBottom: 16 },
-  title: { fontSize: 24, fontWeight: 400, color: '#202124', margin: '0 0 8px' },
-  subtitle: { fontSize: 16, color: '#5f6368', margin: '0 0 32px' },
-  emailInput: {
-    width: '100%', padding: '13px 15px', border: '1px solid #dadce0',
-    borderRadius: 4, fontSize: 16, color: '#202124', outline: 'none',
-    boxSizing: 'border-box', marginBottom: 24, background: '#f8f9fa',
+  logoWrap: { display: 'flex', justifyContent: 'center', marginBottom: 24 },
+  logoCircle: {
+    width: 72, height: 72, borderRadius: '50%',
+    background: '#f1f3f4',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
-  divider: {
-    display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24,
+  title: { fontSize: 26, fontWeight: 400, color: '#202124', margin: '0 0 10px' },
+  subtitle: { fontSize: 16, color: '#5f6368', margin: '0 0 32px', fontWeight: 400 },
+  input: {
+    width: '100%', padding: '14px 16px',
+    border: '1px solid #dadce0', borderRadius: 6,
+    fontSize: 16, color: '#202124',
+    boxSizing: 'border-box', background: '#fff',
+    fontFamily: "'Google Sans', Roboto, Arial, sans-serif",
+    marginBottom: 28, transition: 'border-color 0.2s',
   },
-  dividerLine: { flex: 1, height: 1, background: '#e0e0e0' },
-  dividerText: { color: '#5f6368', fontSize: 12, whiteSpace: 'nowrap' },
-  vaultlessBtn: {
-    width: '100%',
-    padding: '12px',
-    background: '#000',
-    color: '#00ff88',
-    border: 'none',
-    borderRadius: 4,
-    fontSize: 15,
-    fontWeight: 600,
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    letterSpacing: 0.5,
-    marginBottom: 12,
+  divider: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 },
+  line: { flex: 1, height: 1, background: '#e8eaed' },
+  dividerText: { color: '#5f6368', fontSize: 13, whiteSpace: 'nowrap' },
+  btn: {
+    width: '100%', padding: '13px 16px',
+    background: '#0d0d0d', color: '#00ff88',
+    border: 'none', borderRadius: 6,
+    fontSize: 14, fontWeight: 700, cursor: 'pointer',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    gap: 10, letterSpacing: '0.06em', marginBottom: 14,
     fontFamily: "'Courier New', monospace",
-    transition: 'opacity 0.2s',
+    transition: 'opacity 0.2s', textTransform: 'uppercase',
   },
-  vaultlessIcon: { fontSize: 18 },
-  vaultlessTagline: { color: '#5f6368', fontSize: 12, margin: '0 0 32px' },
+  hex: { fontSize: 18, color: '#00ff88', lineHeight: 1 },
+  tagline: { color: '#9aa0a6', fontSize: 12, margin: '0 0 28px', letterSpacing: '0.02em' },
   footer: {
-    borderTop: '1px solid #e0e0e0',
-    paddingTop: 16,
-    display: 'flex',
-    justifyContent: 'center',
-    gap: 24,
+    borderTop: '1px solid #e8eaed', paddingTop: 18,
+    display: 'flex', justifyContent: 'center', gap: 28,
   },
   link: { color: '#5f6368', fontSize: 12, textDecoration: 'none' },
 };
