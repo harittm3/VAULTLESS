@@ -206,6 +206,9 @@ export default function Auth() {
                 onMouseMove={mouse.onMouseMove}
                 onMouseDown={mouse.onMouseDown}
                 onMouseUp={mouse.onMouseUp}
+                onTouchStart={mouse.onTouchStart}
+                onTouchMove={mouse.onTouchMove}
+                onTouchEnd={mouse.onTouchEnd}
                 placeholder="Start typing..."
                 autoComplete="off"
                 spellCheck={false}

@@ -12,12 +12,33 @@ const REQUIRED_SAMPLES = 3;
 export default function Enroll() {
   const navigate = useNavigate();
   const { setEnrollmentVector, setEnrollmentKeystroke, setEnrollmentMouse, setWalletAddress, setIsEnrolled, addEtherscanLink, demoMode } = useVaultless();
+  const showSensorDebug = import.meta.env.VITE_SHOW_SENSOR_DEBUG === 'true';
 
   const [phase, setPhase] = useState('intro'); // intro | capturing | processing | done | error
   const [sampleCount, setSampleCount] = useState(0);
   const [currentInput, setCurrentInput] = useState('');
   const [samples, setSamples] = useState([]);
   const [graphData, setGraphData] = useState([]);
+  const [gyroGraphData, setGyroGraphData] = useState([]);
+  const [touchGraphData, setTouchGraphData] = useState([]);
+  const [motionAvailable, setMotionAvailable] = useState(false);
+  const [sensorDiag, setSensorDiag] = useState({
+    platform: 'unknown',
+    browser: 'unknown',
+    hasDeviceMotion: false,
+    hasDeviceOrientation: false,
+    isSecureContext: false,
+    motionPermission: 'unknown',
+    orientationPermission: 'unknown',
+    motionEvents: 0,
+    orientationEvents: 0,
+    touchEvents: 0,
+    lastMotionEventAt: null,
+    lastOrientationEventAt: null,
+    lastTouchEventAt: null,
+    captureStartedAt: null,
+  });
+  const [sensorRequesting, setSensorRequesting] = useState(false);
   const [txHash, setTxHash] = useState(null);
   const [statusMsg, setStatusMsg] = useState('');
   const [walletAddr, setWalletAddr] = useState(null);
@@ -31,7 +52,34 @@ export default function Enroll() {
       inputRef.current?.focus();
       mouse.startCapture();
     }
-  }, [phase, sampleCount]);
+  }, [phase, sampleCount, mouse.startCapture]);
+
+  useEffect(() => {
+    if (phase !== 'capturing') return;
+    const onTouchStartWindow = (e) => mouse.onTouchStart(e);
+    const onTouchMoveWindow = (e) => mouse.onTouchMove(e);
+    const onTouchEndWindow = () => mouse.onTouchEnd();
+    window.addEventListener('touchstart', onTouchStartWindow, { passive: true });
+    window.addEventListener('touchmove', onTouchMoveWindow, { passive: true });
+    window.addEventListener('touchend', onTouchEndWindow, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', onTouchStartWindow);
+      window.removeEventListener('touchmove', onTouchMoveWindow);
+      window.removeEventListener('touchend', onTouchEndWindow);
+    };
+  }, [phase, mouse.onTouchStart, mouse.onTouchMove, mouse.onTouchEnd]);
+
+  useEffect(() => {
+    setMotionAvailable(mouse.motionSupported);
+  }, [mouse.motionSupported]);
+
+  useEffect(() => {
+    if (phase !== 'capturing') return;
+    const interval = setInterval(() => {
+      setSensorDiag({ ...mouse.getDiagnostics() });
+    }, 250);
+    return () => clearInterval(interval);
+  }, [phase, mouse.getDiagnostics]);
 
   // Build live graph from keystroke events
   useEffect(() => {
@@ -44,6 +92,41 @@ export default function Enroll() {
       setGraphData(data);
     }
   }, [keystroke.events]);
+
+  // Build live gyro graph
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const motion = mouse.getMotionData();
+      if (motion.gyro.length > 0) {
+        const data = motion.gyro.slice(-30).map((g, i) => ({
+          i,
+          alpha: Math.abs(g.alpha),
+          beta: Math.abs(g.beta),
+          gamma: Math.abs(g.gamma),
+          mag: Math.sqrt(g.alpha * g.alpha + g.beta * g.beta + g.gamma * g.gamma),
+        }));
+        setGyroGraphData(data);
+      }
+    }, 200); // Update every 200ms
+    return () => clearInterval(interval);
+  }, [mouse.getMotionData]);
+
+  // Build live touch graph
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const pts = mouse.getPoints();
+      const touchPts = pts.filter(p => p.isTouch).slice(-30);
+      if (touchPts.length > 0) {
+        const data = touchPts.map((p, i) => ({
+          i,
+          pressure: p.pressure || 0,
+          velocity: p.velocity || 0,
+        }));
+        setTouchGraphData(data);
+      }
+    }, 200);
+    return () => clearInterval(interval);
+  }, [mouse.getPoints]);
 
   const connectWallet = async () => {
     try {
@@ -66,6 +149,50 @@ export default function Enroll() {
   const handleTyping = (e) => {
     setCurrentInput(e.target.value);
   };
+
+  const requestSensors = async () => {
+    setSensorRequesting(true);
+    try {
+      const granted = await mouse.requestSensorAccess();
+      if (!granted) {
+        setStatusMsg('Could not enable motion sensors. You can continue, but mobile protection will be reduced.');
+      } else {
+        setStatusMsg('Motion sensors enabled.');
+      }
+    } finally {
+      setSensorRequesting(false);
+    }
+  };
+
+  const motionNeedsGesture = sensorDiag.motionPermission === 'requires-user-gesture';
+  const orientationNeedsGesture = sensorDiag.orientationPermission === 'requires-user-gesture';
+  const insecureContext =
+    sensorDiag.motionPermission === 'insecure-context' ||
+    sensorDiag.orientationPermission === 'insecure-context';
+  const sensorDenied =
+    sensorDiag.motionPermission === 'denied' ||
+    sensorDiag.orientationPermission === 'denied' ||
+    sensorDiag.motionPermission === 'error' ||
+    sensorDiag.orientationPermission === 'error';
+  const androidChromeNeedsManualEnable =
+    sensorDiag.platform === 'android' &&
+    sensorDiag.browser === 'chrome' &&
+    sensorDiag.hasDeviceMotion &&
+    !motionAvailable;
+  const showEnableSensors = motionNeedsGesture || orientationNeedsGesture || androidChromeNeedsManualEnable;
+  const sensorsEnabled = motionAvailable || sensorDiag.motionPermission === 'granted' || sensorDiag.orientationPermission === 'granted';
+  const sensorActivityLive = (sensorDiag.motionEvents || 0) > 0 || (sensorDiag.orientationEvents || 0) > 0;
+  const sensorHealthText = !sensorDiag.isSecureContext
+    ? 'Secure connection required'
+    : sensorsEnabled
+      ? 'Connected'
+      : 'Limited';
+
+  const sensorBlockedHint = insecureContext
+    ? 'Motion sensors need a secure connection. Open the app over HTTPS and try again.'
+    : sensorDiag.platform === 'android' && sensorDiag.browser === 'chrome'
+      ? 'Sensor access is blocked. In Chrome Android, allow Motion sensors in Site settings, then reload.'
+      : 'Sensor access is blocked. Enable motion/orientation access in browser settings, then reload.';
 
   const handleKeyUp = (e) => {
     keystroke.onKeyUp(e);
@@ -187,6 +314,13 @@ export default function Enroll() {
       avgAngleChange:    scalar('avgAngleChange'),
       angleChangeStd:    scalar('angleChangeStd'),
       avgClickHold:      scalar('avgClickHold'),
+      avgTouchPressure:  scalar('avgTouchPressure'),
+      stdTouchPressure:  scalar('stdTouchPressure'),
+      touchPointCount:   scalar('touchPointCount'),
+      avgAccelMag:       scalar('avgAccelMag'),
+      stdAccelMag:       scalar('stdAccelMag'),
+      avgGyroMag:        scalar('avgGyroMag'),
+      stdGyroMag:        scalar('stdGyroMag'),
       velocities,
       angleDiffs,
       dts,
@@ -271,6 +405,38 @@ export default function Enroll() {
             <div style={styles.phrase}>"{PHRASE}"</div>
             <p style={styles.hint}>Press Enter when done</p>
 
+            <div style={styles.sensorInfoCard}>
+              <div style={styles.sensorInfoText}>
+                Motion Sensors: <span style={{ color: sensorsEnabled ? '#00ff88' : '#ffb366' }}>{sensorsEnabled ? 'Enabled' : 'Optional'}</span>
+              </div>
+              {!sensorsEnabled && (
+                <div style={styles.sensorInfoSubtext}>
+                  Enable for stronger mobile protection.
+                </div>
+              )}
+            </div>
+
+            {showEnableSensors && (
+              <div style={styles.sensorActionBox}>
+                <div style={styles.sensorActionText}>
+                  Tap to enable motion sensors on this device.
+                </div>
+                <button
+                  style={styles.sensorEnableBtn}
+                  onClick={requestSensors}
+                  disabled={sensorRequesting}
+                >
+                  {sensorRequesting ? 'Enabling Sensors...' : 'Enable Sensors'}
+                </button>
+              </div>
+            )}
+
+            {sensorDenied && (
+              <div style={styles.sensorWarning}>
+                {sensorBlockedHint}
+              </div>
+            )}
+
             <input
               ref={inputRef}
               style={styles.typeInput}
@@ -281,6 +447,9 @@ export default function Enroll() {
               onMouseMove={mouse.onMouseMove}
               onMouseDown={mouse.onMouseDown}
               onMouseUp={mouse.onMouseUp}
+              onTouchStart={mouse.onTouchStart}
+              onTouchMove={mouse.onTouchMove}
+              onTouchEnd={mouse.onTouchEnd}
               placeholder="Start typing..."
               autoComplete="off"
               spellCheck={false}
@@ -303,6 +472,63 @@ export default function Enroll() {
                 </div>
               </div>
             )}
+
+            {gyroGraphData.length > 0 && (
+              <div style={styles.graphContainer}>
+                <div style={styles.graphLabel}>GYROSCOPE ACTIVITY — LIVE</div>
+                <ResponsiveContainer width="100%" height={120}>
+                  <LineChart data={gyroGraphData}>
+                    <Line type="monotone" dataKey="mag" stroke="#ff6600" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+                    <XAxis hide />
+                    <YAxis hide />
+                  </LineChart>
+                </ResponsiveContainer>
+                <div style={styles.graphLegend}>
+                  <span style={{ color: '#ff6600' }}>■ Gyro Magnitude</span>
+                </div>
+              </div>
+            )}
+
+            {!motionAvailable && gyroGraphData.length === 0 && (
+              <div style={styles.graphContainer}>
+                <div style={styles.graphLabel}>GYROSCOPE ACTIVITY — NOT AVAILABLE</div>
+                <div style={{ color: '#666', fontSize: 12, padding: '20px' }}>
+                  Motion sensors not accessible. Grant permission or use a compatible device for enhanced security.
+                </div>
+              </div>
+            )}
+
+            {showSensorDebug && touchGraphData.length > 0 && (
+              <div style={styles.graphContainer}>
+                <div style={styles.graphLabel}>TOUCH PRESSURE — LIVE</div>
+                <ResponsiveContainer width="100%" height={120}>
+                  <LineChart data={touchGraphData}>
+                    <Line type="monotone" dataKey="pressure" stroke="#ff00ff" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+                    <XAxis hide />
+                    <YAxis hide />
+                  </LineChart>
+                </ResponsiveContainer>
+                <div style={styles.graphLegend}>
+                  <span style={{ color: '#ff00ff' }}>■ Touch Pressure</span>
+                </div>
+              </div>
+            )}
+
+            <div style={styles.sensorMiniCard}>
+              <div style={styles.sensorMiniTitle}>SENSOR STATUS</div>
+              <div style={styles.sensorMiniRow}>
+                <span style={styles.sensorMiniKey}>Health</span>
+                <span style={styles.sensorMiniVal}>{sensorHealthText}</span>
+              </div>
+              <div style={styles.sensorMiniRow}>
+                <span style={styles.sensorMiniKey}>Permissions</span>
+                <span style={styles.sensorMiniVal}>{sensorsEnabled ? 'Granted' : 'Not granted'}</span>
+              </div>
+              <div style={styles.sensorMiniRow}>
+                <span style={styles.sensorMiniKey}>Gyro Activity</span>
+                <span style={styles.sensorMiniVal}>{sensorActivityLive ? 'Live' : 'Waiting for movement'}</span>
+              </div>
+            </div>
 
             {statusMsg && <div style={styles.status}>{statusMsg}</div>}
 
@@ -374,10 +600,22 @@ const styles = {
   steps: { textAlign: 'left', color: '#555', fontSize: 13, lineHeight: 2.2, marginBottom: 40, paddingLeft: 20 },
   cta: { background: '#00ff88', color: '#000', border: 'none', padding: '14px 32px', fontSize: 13, fontWeight: 700, letterSpacing: 2, cursor: 'pointer', borderRadius: 4, fontFamily: "'Courier New', monospace" },
   ctaSmall: { background: '#00ff88', color: '#000', border: 'none', padding: '10px 24px', fontSize: 12, fontWeight: 700, cursor: 'pointer', borderRadius: 4, marginTop: 16, letterSpacing: 1, fontFamily: "'Courier New', monospace" },
+  sensorInfoCard: { marginBottom: 16, background: '#0b0f0b', border: '1px solid #1e2a1e', borderRadius: 6, padding: '10px 12px', textAlign: 'left' },
+  sensorInfoText: { color: '#9fb89f', fontSize: 12 },
+  sensorInfoSubtext: { color: '#6f7f6f', fontSize: 11, marginTop: 4 },
+  sensorActionBox: { marginBottom: 16, background: '#0f1a12', border: '1px solid #1f3d2a', borderRadius: 6, padding: '10px 12px' },
+  sensorActionText: { color: '#8ed8ae', fontSize: 12, marginBottom: 8 },
+  sensorEnableBtn: { background: '#00ff88', color: '#000', border: 'none', padding: '8px 14px', borderRadius: 4, cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: "'Courier New', monospace" },
+  sensorWarning: { marginBottom: 16, background: '#2a120f', border: '1px solid #5c2a23', borderRadius: 6, padding: '10px 12px', color: '#ffb09f', fontSize: 12, textAlign: 'left', lineHeight: 1.4 },
   typeInput: { width: '100%', padding: '16px', background: '#111', border: '1px solid #00ff8844', borderRadius: 6, color: '#00ff88', fontSize: 18, textAlign: 'center', outline: 'none', boxSizing: 'border-box', letterSpacing: 2, fontFamily: "'Courier New', monospace" },
   graphContainer: { marginTop: 32, background: '#060606', border: '1px solid #111', borderRadius: 8, padding: '16px' },
   graphLabel: { color: '#333', fontSize: 10, letterSpacing: 3, marginBottom: 8 },
   graphLegend: { display: 'flex', gap: 20, justifyContent: 'center', fontSize: 11, marginTop: 8 },
+  sensorMiniCard: { marginTop: 20, background: '#090c09', border: '1px solid #1a2a1e', borderRadius: 8, padding: '12px 14px', textAlign: 'left' },
+  sensorMiniTitle: { color: '#00ff88', fontSize: 10, letterSpacing: 2, marginBottom: 8, fontWeight: 700 },
+  sensorMiniRow: { display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 12, marginBottom: 4 },
+  sensorMiniKey: { color: '#6d7d6d' },
+  sensorMiniVal: { color: '#c9ffde' },
   sampleBadge: { background: '#00ff8822', border: '1px solid #00ff8844', color: '#00ff88', display: 'inline-block', padding: '4px 14px', borderRadius: 20, fontSize: 11, letterSpacing: 2, marginBottom: 24 },
   status: { color: '#666', fontSize: 13, margin: '16px 0' },
   addr: { color: '#333', fontSize: 11, marginTop: 8, wordBreak: 'break-all' },

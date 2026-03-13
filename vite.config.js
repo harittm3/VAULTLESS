@@ -8,5 +8,7 @@ export default defineConfig({
   },
   server: {
     open: true,
+    // Allow HTTPS tunnel hostnames (e.g. *.loca.lt) during mobile testing.
+    allowedHosts: true,
   },
 });

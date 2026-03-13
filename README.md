@@ -174,7 +174,7 @@ This lets the app avoid clearly signaling to an attacker that duress was detecte
 
 ## Persistence
 
-Enrollment data is stored client-side in `localStorage` through [`src/lib/VaultlessContext.jsx`](../VAULTLESS/src/lib/VaultlessContext.jsx).
+Enrollment data is stored client-side in `localStorage` through [`src/lib/VaultlessContext.jsx`](/c:/Users/Dell/OneDrive/Desktop/VAULTLESS/src/lib/VaultlessContext.jsx).
 
 That includes:
 
