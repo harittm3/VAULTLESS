@@ -9,6 +9,7 @@ export default function Landing() {
   const canvasRef = useRef(null);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     setTimeout(() => setVisible(true), 100);
     const cleanup = animateParticles(canvasRef.current);
     return cleanup;
@@ -212,15 +213,13 @@ function animateParticles(canvas) {
 
 const s = {
   root: {
-   root: {
-  minHeight: '100vh',
-  background: 'transparent',
-  color: '#e8e8f0',
-  fontFamily: "'Inter', 'Segoe UI', sans-serif",
-  position: 'relative',
-  zIndex: 1,
-  overflowX: 'hidden',
-}
+    minHeight: '100vh',
+    background: 'transparent',
+    color: '#e8e8f0',
+    fontFamily: "'Inter', 'Segoe UI', sans-serif",
+    position: 'relative',
+    zIndex: 1,
+    overflowX: 'hidden',
   },
   canvas: {
     position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
