@@ -65,7 +65,7 @@ const styles = {
   hex: {
     transform: "scale(1)",
     opacity: 1,
-    transition: "transform 0.75s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.75s ease",
+    transition: "transform 1.0s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.75s ease",
     willChange: "transform, opacity",
   },
 };
